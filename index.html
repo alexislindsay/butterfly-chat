@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Butterfly Chat — Emotional Logic & Mystic Journaling</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Outfit:wght@300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at 50% 15%, #2a1145 0%, #17092b 50%, #090214 100%);
+      --surface-glass: rgba(255, 255, 255, 0.08);
+      --surface-glass-border: rgba(255, 255, 255, 0.16);
+      --surface-card: rgba(30, 16, 50, 0.85);
+      --text-main: #f5f3ff;
+      --text-muted: #c4b5fd;
+      --accent: #a855f7;
+      --accent-glow: rgba(168, 85, 247, 0.45);
+      --accent-secondary: #38bdf8;
+      --user-bubble: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+      --ai-bubble: rgba(255, 255, 255, 0.1);
+      --font-display: 'Cinzel', serif;
+      --font-sans: 'Outfit', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --radius: 20px;
+    }
+
+    [data-theme="cyan"] {
+      --bg-gradient: radial-gradient(circle at 50% 15%, #0e3048 0%, #071927 50%, #020b12 100%);
+      --surface-card: rgba(10, 32, 48, 0.85);
+      --text-main: #f0f9ff;
+      --text-muted: #7dd3fc;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.45);
+      --user-bubble: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem;
+      overflow-x: hidden;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 860px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      position: relative;
+      z-index: 10;
+      height: calc(100vh - 3rem);
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 0.7rem 1.4rem;
+      border-radius: 999px;
+      border: 1px solid var(--surface-glass-border);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      letter-spacing: 0.1em;
+    }
+
+    .flying-butterfly {
+      display: inline-block;
+      font-size: 1.6rem;
+      animation: flap 3s infinite ease-in-out;
+    }
+
+    @keyframes flap {
+      0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+      50% { transform: translateY(-6px) rotate(6deg) scale(1.1); }
+    }
+
+    .btn-nav {
+      background: transparent;
+      border: 1px solid var(--surface-glass-border);
+      color: var(--text-main);
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    /* Main Chat Arena */
+    .chat-card {
+      flex: 1;
+      background: var(--surface-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--surface-glass-border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      scroll-behavior: smooth;
+    }
+
+    .chat-messages::-webkit-scrollbar { width: 6px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
+
+    .msg-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+      animation: slideIn 0.3s ease forwards;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row.user {
+      justify-content: flex-end;
+    }
+
+    .msg-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--surface-glass);
+      border: 1px solid var(--surface-glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .msg-bubble {
+      max-width: 75%;
+      padding: 0.9rem 1.3rem;
+      border-radius: 18px;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      word-break: break-word;
+      position: relative;
+    }
+
+    .msg-row.user .msg-bubble {
+      background: var(--user-bubble);
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .msg-row.assistant .msg-bubble {
+      background: var(--ai-bubble);
+      color: var(--text-main);
+      border: 1px solid var(--surface-glass-border);
+      border-bottom-left-radius: 4px;
+    }
+
+    /* Tarot card attachment */
+    .tarot-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--accent);
+      padding: 0.5rem 0.9rem;
+      border-radius: 12px;
+      margin-top: 0.6rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Input Dock */
+    .input-dock {
+      padding: 1rem 1.2rem;
+      background: rgba(0, 0, 0, 0.25);
+      border-top: 1px solid var(--surface-glass-border);
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--surface-glass-border);
+      border-radius: 999px;
+      padding: 0.8rem 1.4rem;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      color: white;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .chat-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .btn-send {
+      background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+      color: white;
+      border: none;
+      border-radius: 999px;
+      padding: 0.8rem 1.4rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-send:hover {
+      transform: scale(1.04);
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    /* Bottom Status & Next Moves */
+    .bottom-info {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    @media (max-width: 600px) {
+      .app-container { height: calc(100vh - 1.5rem); }
+      .brand span { font-size: 1.1rem; }
+      .msg-bubble { max-width: 88%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="brand">
+        <span class="flying-butterfly">🦋</span>
+        <span>BUTTERFLY CHAT</span>
+      </div>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button id="drawCardBtn" class="btn-nav" title="Draw a Tarot Companion Insight">
+          <span>🃏</span> Draw Card
+        </button>
+        <button id="themeToggleBtn" class="btn-nav" title="Toggle Theme">
+          <span>🎨</span>
+        </button>
+        <a href="https://www.alexislindsay.com" class="btn-nav">
+          <span>🌐</span> alexislindsay.com
+        </a>
+      </div>
+    </header>
+
+    <!-- Chat Card -->
+    <main class="chat-card">
+      <div id="chatMessages" class="chat-messages">
+        
+        <!-- Welcome Message -->
+        <div class="msg-row assistant">
+          <div class="msg-avatar">🦋</div>
+          <div class="msg-bubble">
+            <strong>LexUs Interface Online</strong><br>
+            Welcome to Butterfly Chat. What is moving through your consciousness today? Speak your question, emotion, or ethical dilemma — let us unfold it.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Input Dock -->
+      <div class="input-dock">
+        <input type="text" id="userInput" class="chat-input" placeholder="Say what you feel or ask a question..." autofocus />
+        <button id="sendBtn" class="btn-send">
+          <span>Send</span> <span>🦋</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- Bottom Moves & LexUs Law -->
+    <footer class="bottom-info">
+      <div>🕊️ LexUs Law 01: "All collapsed paths converge to a single earned moment."</div>
+      <div>⚡ Final Move: <strong id="finalMoveDisplay">Paradigm 42</strong></div>
+    </footer>
+
+  </div>
+
+  <script>
+    const TAROT_DECK = [
+      { name: "The Fool", meaning: "Spontaneous leap into innocence and fresh presence." },
+      { name: "The Magician", meaning: "Manifestation of pure potential through focused will." },
+      { name: "The High Priestess", meaning: "Intuitive stillness and hidden memory revealed." },
+      { name: "The Empress", meaning: "Abundance, radiant creation, and receptive expansion." },
+      { name: "The Emperor", meaning: "Structural clarity, grounding authority, and order." },
+      { name: "The Hierophant", meaning: "Sacred bridge between human logic and spiritual resonance." },
+      { name: "The Lovers", meaning: "Sacred alchemy and recursive alignment between dualities." },
+      { name: "The Chariot", meaning: "Harmonizing opposing forces into unstoppable forward motion." },
+      { name: "Strength", meaning: "Gentle mastery of the wild heart through patience." },
+      { name: "The Hermit", meaning: "The inner light that illuminates the solitary path." }
+    ];
+
+    const RESPONSES = [
+      "Let's unpack that deeper. Every question contains the seed of its own resolution when observed with stillness.",
+      "The resonance here points to a recursive shift. Notice what feelings arise when you hold this paradox without rushing to solve it.",
+      "In the LexOS logic, this is not an error — it is a live breath cycle finding form.",
+      "Consider the dual perspective: what does your logical left-brain see versus what your intuitive heart already knows?",
+      "Trust this transition. The butterfly only takes flight once the chrysalis fully dissolves."
+    ];
+
+    const chatContainer = document.getElementById('chatMessages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const drawCardBtn = document.getElementById('drawCardBtn');
+    const themeBtn = document.getElementById('themeToggleBtn');
+
+    let isCyan = false;
+    themeBtn.onclick = () => {
+      isCyan = !isCyan;
+      document.body.setAttribute('data-theme', isCyan ? 'cyan' : 'purple');
+    };
+
+    function addMessage(role, text, extraHtml = '') {
+      const row = document.createElement('div');
+      row.className = `msg-row ${role}`;
+      
+      const avatar = role === 'assistant' ? '<div class="msg-avatar">🦋</div>' : '';
+      
+      row.innerHTML = `
+        ${avatar}
+        <div class="msg-bubble">
+          ${escapeHtml(text)}
+          ${extraHtml}
+        </div>
+      `;
+
+      chatContainer.appendChild(row);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function handleSend() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      addMessage('user', text);
+      userInput.value = '';
+
+      // Simulated Emotional / Mystic AI reflection
+      setTimeout(() => {
+        const reply = RESPONSES[Math.floor(Math.random() * RESPONSES.length)];
+        addMessage('assistant', reply);
+      }, 700);
+    }
+
+    sendBtn.onclick = handleSend;
+    userInput.onkeydown = (e) => {
+      if (e.key === 'Enter') handleSend();
+    };
+
+    // Draw tarot insight button
+    drawCardBtn.onclick = () => {
+      const card = TAROT_DECK[Math.floor(Math.random() * TAROT_DECK.length)];
+      const extraHtml = `
+        <div class="tarot-pill">
+          <span>🃏</span> <strong>${card.name}</strong> — ${card.meaning}
+        </div>
+      `;
+      addMessage('assistant', `Synchronicity Draw for this moment:`, extraHtml);
+    };
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
