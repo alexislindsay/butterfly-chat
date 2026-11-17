@@ -1,0 +1,25 @@
+{
+  "name": "Butterfly Chat — Eigenflow Companion",
+  "short_name": "Butterfly",
+  "description": "Eigenflow Temporal Companion & Holographic Memory Mirror",
+  "start_url": "./",
+  "id": "butterfly-chat-lexos",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080112",
+  "theme_color": "#16072b",
+  "icons": [
+    {
+      "src": "butterfly_chat.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "butterfly_chat.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
