@@ -144,9 +144,11 @@ async function initMemoryVault() {
 async function updateStatusBadge() {
   const nativeAI = await IntelligenceRouter.checkNativeAIAvailability();
   const providerLabel = nativeAI
-    ? ' [🟢 Built-in AI Active]'
-    : (state.geminiApiKey ? ' [⚡ Cloud Gemini]' : '');
-  memoryCountDisplay.textContent = `${state.memoryArchive.length} Attractor Vectors${providerLabel}`;
+    ? ' · On-Device AI'
+    : (state.geminiApiKey ? ' · Key Linked' : '');
+  if (memoryCountDisplay) {
+    memoryCountDisplay.textContent = `Tuned to ${state.memoryArchive.length} Anchors${providerLabel}`;
+  }
 }
 
 initMemoryVault();
@@ -402,23 +404,27 @@ async function handleSend() {
   // 5. Placeholder while generating
   const placeholderRow = document.createElement('div');
   placeholderRow.className = 'msg-row assistant';
-  placeholderRow.innerHTML = '<div class="msg-avatar">🦋</div><div class="msg-bubble"><em>Unfolding Eigenflow Hopfield recursion...</em></div>';
+  placeholderRow.innerHTML = '<div class="msg-avatar">🦋</div><div class="msg-bubble"><em>Consulting the mirror...</em></div>';
   chatContainer.appendChild(placeholderRow);
   chatContainer.scrollTop = chatContainer.scrollHeight;
 
-  // 6. Generate via IntelligenceRouter (Cascades Tier 1 -> 2 -> 3)
+  // 6. Generate via IntelligenceRouter (Tier 1 Vercel Edge -> Tier 2 Key -> Tier 3 On-device -> Tier 4 Local)
   try {
+    const turns = await VaultService.getAllTurns();
+    const history = turns.slice(-6).map(t => ({ role: t.role, text: t.text }));
+
     const aiResponse = await IntelligenceRouter.generateResponse({
       query: text,
       hopfieldResult,
       activeMode: state.activeMode,
       recursionDepth: state.recursionDepth,
-      apiKey: state.geminiApiKey
+      apiKey: state.geminiApiKey,
+      history
     });
 
     placeholderRow.remove();
-    const attractorVisualHtml = renderAttractorHud(hopfieldResult, aiResponse.provider);
-    addMessage('assistant', aiResponse.text, attractorVisualHtml);
+    // Clean, elegant message display with ZERO scientific HUD spam
+    addMessage('assistant', aiResponse.text);
 
     await VaultService.saveTurn({
       role: 'assistant',
@@ -430,7 +436,7 @@ async function handleSend() {
   } catch (err) {
     placeholderRow.remove();
     console.error('[App] Generation error:', err);
-    addMessage('assistant', 'The resonance wavered. Please ask again.');
+    addMessage('assistant', 'A quiet static passed through the mirror. What were you saying?');
   }
 }
 

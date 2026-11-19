@@ -39,8 +39,8 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Only intercept same-origin requests (don't intercept Gemini API or fonts)
-  if (!e.request.url.startsWith(self.location.origin)) return;
+  // Only intercept same-origin static requests (never intercept /api/ endpoints)
+  if (!e.request.url.startsWith(self.location.origin) || e.request.url.includes('/api/')) return;
 
   e.respondWith(
     fetch(e.request)

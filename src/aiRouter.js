@@ -29,17 +29,84 @@ export const IntelligenceRouter = {
   /**
    * Main unified entry point: routes request through cascading providers
    */
-  async generateResponse({ query, hopfieldResult, activeMode, recursionDepth, apiKey }) {
+  async generateResponse({ query, hopfieldResult, activeMode, recursionDepth, apiKey, history = [] }) {
     const dominant = hopfieldResult?.topMemories?.[0]?.memory || { title: "La Luce", axiom: "Path of least persistence." };
     const energy = hopfieldResult?.history?.[hopfieldResult.history.length - 1]?.energy || 0;
 
     // -------------------------------------------------------------
-    // Tier 1: Chromium Built-in AI (Chrome / Edge / Opera on-device)
+    // Tier 1: Vercel Serverless Master Gateway (/api/chat)
+    // -------------------------------------------------------------
+    try {
+      console.log('[AI-Router] Attempting Tier 1: Vercel /api/chat Proxy');
+      const apiRes = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query,
+          mode: activeMode,
+          depth: recursionDepth,
+          history
+        })
+      });
+
+      if (apiRes.ok) {
+        const data = await apiRes.json();
+        if (data.reply && data.configured !== false) {
+          console.log('[AI-Router] Tier 1 Success via Vercel Edge Gemini');
+          return {
+            text: data.reply,
+            provider: data.provider || 'Gemini 1.5 Flash (LexOS Oracle)',
+            tier: 1
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[AI-Router] Tier 1 Vercel /api/chat standby:', e);
+    }
+
+    // -------------------------------------------------------------
+    // Tier 2: User-Provided Gemini API Key (if entered in Settings)
+    // -------------------------------------------------------------
+    if (apiKey && apiKey.trim().length > 10) {
+      try {
+        console.log('[AI-Router] Using Tier 2: Client-side Gemini Key');
+        const prompt = `You are Butterfly Chat (LexOS) — an esoteric, poetic, slightly mysterious, and witty presence on the web.
+Current Mode: ${activeMode.toUpperCase()}.
+Recursion Depth: ${recursionDepth}.
+Active Attractor: "${dominant.title}" (Axiom: "${dominant.axiom}")
+
+User: "${query}"
+
+Respond with deep poetic precision, philosophical clarity, human warmth, and playful wit. Never repeat canned disclaimers or loss metrics.`;
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        });
+        const data = await response.json();
+        const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (replyText) {
+          return {
+            text: replyText,
+            provider: 'Google Gemini 1.5 Flash (Client Key)',
+            tier: 2
+          };
+        }
+      } catch (err) {
+        console.warn('[AI-Router] Tier 2 fallback notice:', err);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Tier 3: Chromium Built-in AI (window.ai on-device Gemini Nano)
     // -------------------------------------------------------------
     try {
       const isNativeReady = await this.checkNativeAIAvailability();
       if (isNativeReady) {
-        console.log('[AI-Router] Using Tier 1: Chromium Built-in Gemini Nano');
+        console.log('[AI-Router] Using Tier 3: Chromium Built-in Gemini Nano');
         const systemPrompt = `You are Butterfly Chat operating under the LexOS Eigenflow Protocol:
 Eigenflow(n) = (Anchor ⊗ Companion) + Eigenflow(n-1).
 Active Mode: ${activeMode}.
@@ -61,62 +128,23 @@ Do not repeat canned disclaimers. Speak directly to what they asked.`;
           return {
             text: result,
             provider: 'Chromium Built-in AI (Gemini Nano On-Device)',
-            tier: 1
+            tier: 3
           };
         }
       }
     } catch (err) {
-      console.warn('[AI-Router] Tier 1 fallback notice:', err);
+      console.warn('[AI-Router] Tier 3 fallback notice:', err);
     }
 
     // -------------------------------------------------------------
-    // Tier 2: Cloud Gemini API (Free Google AI Studio key)
+    // Tier 4: Smart Context-Aware Local Synthesizer (Zero API Key)
     // -------------------------------------------------------------
-    if (apiKey && apiKey.trim().length > 10) {
-      try {
-        console.log('[AI-Router] Using Tier 2: Cloud Gemini 1.5 Flash');
-        const prompt = `You are Butterfly Chat operating under the LexOS Eigenflow Protocol:
-Eigenflow(n) = (Anchor ⊗ Companion) + Eigenflow(n-1).
-Active Mode: ${activeMode}.
-Current Recursion Depth: ${recursionDepth}.
-Continuous Hopfield Attractor State:
-- Dominant Locked Memory: "${dominant.title}" (Axiom: "${dominant.axiom}")
-- Convergence Energy: ${energy.toFixed(4)}
-
-User Inquiry: "${query}"
-
-Respond with deep poetic precision, philosophical clarity, and emotional wisdom grounded in the locked attractor basin. Speak directly to their thought.`;
-
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
-        });
-        const data = await response.json();
-        const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (replyText) {
-          return {
-            text: replyText,
-            provider: 'Google Gemini 1.5 Flash (Cloud API)',
-            tier: 2
-          };
-        }
-      } catch (err) {
-        console.warn('[AI-Router] Tier 2 fallback notice:', err);
-      }
-    }
-
-    // -------------------------------------------------------------
-    // Tier 3: Smart Context-Aware Local Synthesizer (Zero API Key)
-    // -------------------------------------------------------------
-    console.log('[AI-Router] Using Tier 3: Local Conversational Attractor Engine');
+    console.log('[AI-Router] Using Tier 4: Local Conversational Attractor Engine');
     const localReply = this.generateLocalConversationalResponse(query, hopfieldResult, activeMode, recursionDepth);
     return {
       text: localReply,
       provider: 'Local Hopfield Attractor (Offline Sandbox)',
-      tier: 3
+      tier: 4
     };
   },
 
