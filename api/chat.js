@@ -129,7 +129,9 @@ CRITICAL VOICE GUIDELINES:
       console.error('[Vercel api/chat] Gemini API Error:', response.status, errBody);
       return res.status(200).json({
         reply: "A brief cosmic static ripples through the mirror. The connection wavered, but the sanctuary remains open. What were you saying?",
-        error: true
+        error: true,
+        errorStatus: response.status,
+        errorDetails: errBody
       });
     }
 
@@ -145,7 +147,8 @@ CRITICAL VOICE GUIDELINES:
     console.error('[Vercel api/chat] Server error:', err);
     return res.status(200).json({
       reply: "The thread trembled in the ether. Breathe, and speak again when ready.",
-      error: true
+      error: true,
+      errorDetails: err?.message || String(err)
     });
   }
 }

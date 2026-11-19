@@ -51,13 +51,16 @@ export const IntelligenceRouter = {
 
       if (apiRes.ok) {
         const data = await apiRes.json();
-        if (data.reply && data.configured !== false) {
+        if (data.reply && data.configured !== false && !data.error) {
           console.log('[AI-Router] Tier 1 Success via Vercel Edge Gemini');
           return {
             text: data.reply,
             provider: data.provider || 'Gemini 1.5 Flash (LexOS Oracle)',
             tier: 1
           };
+        }
+        if (data.error) {
+          console.warn('[AI-Router] Tier 1 /api/chat reported an error:', data.errorStatus, data.errorDetails || data.reply);
         }
       }
     } catch (e) {
