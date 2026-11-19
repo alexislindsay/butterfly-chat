@@ -121,7 +121,13 @@ CRITICAL VOICE GUIDELINES:
     parts: [{ text: query.trim() }]
   });
 
-  const candidateModels = ['gemini-2.5-flash', 'gemini-flash-latest'];
+  const candidateModels = [
+    'gemini-2.5-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-2.5-flash',
+    'gemini-flash-latest',
+    'gemini-2.5-pro'
+  ];
   let lastError = null;
 
   for (const modelName of candidateModels) {
