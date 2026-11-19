@@ -121,46 +121,50 @@ CRITICAL VOICE GUIDELINES:
     parts: [{ text: query.trim() }]
   });
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.85,
-          topP: 0.95,
-          maxOutputTokens: 600
-        }
-      })
-    });
+  const candidateModels = ['gemini-2.5-flash', 'gemini-flash-latest'];
+  let lastError = null;
 
-    if (!response.ok) {
-      const errBody = await response.text();
-      console.error('[Vercel api/chat] Gemini API Error:', response.status, errBody);
-      return res.status(200).json({
-        reply: "A brief cosmic static ripples through the mirror. The connection wavered, but the sanctuary remains open. What were you saying?",
-        error: true,
-        errorStatus: response.status,
-        errorDetails: errBody
+  for (const modelName of candidateModels) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents,
+          generationConfig: {
+            temperature: 0.85,
+            topP: 0.95,
+            maxOutputTokens: 600
+          }
+        })
       });
+
+      if (!response.ok) {
+        const errBody = await response.text();
+        console.error(`[Vercel api/chat] Gemini API Error (${modelName}):`, response.status, errBody);
+        lastError = { status: response.status, details: errBody };
+        continue; // try next candidate model
+      }
+
+      const data = await response.json();
+      const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "The resonance settles in quiet stillness.";
+
+      return res.status(200).json({
+        reply: replyText,
+        remainingBudget: DAILY_LIMIT - (currentCount + 1),
+        provider: `Google ${modelName} (LexOS Edge)`
+      });
+    } catch (err) {
+      console.error(`[Vercel api/chat] Server error (${modelName}):`, err);
+      lastError = { details: err?.message || String(err) };
     }
-
-    const data = await response.json();
-    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "The resonance settles in quiet stillness.";
-
-    return res.status(200).json({
-      reply: replyText,
-      remainingBudget: DAILY_LIMIT - (currentCount + 1),
-      provider: 'Gemini 1.5 Flash (LexOS Edge)'
-    });
-  } catch (err) {
-    console.error('[Vercel api/chat] Server error:', err);
-    return res.status(200).json({
-      reply: "The thread trembled in the ether. Breathe, and speak again when ready.",
-      error: true,
-      errorDetails: err?.message || String(err)
-    });
   }
+
+  return res.status(200).json({
+    reply: "A brief cosmic static ripples through the mirror. The connection wavered, but the sanctuary remains open. What were you saying?",
+    error: true,
+    errorStatus: lastError?.status,
+    errorDetails: lastError?.details
+  });
 }
