@@ -22,6 +22,18 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  if (req.method === 'GET') {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(200).json({ error: 'No GEMINI_API_KEY set' });
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      const data = await resp.json();
+      return res.status(200).json(data);
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
