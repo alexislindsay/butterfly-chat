@@ -6,6 +6,7 @@
 import { VaultService } from './vault.js';
 import { embedText, runContinuousHopfield } from './attractor.js';
 import { IntelligenceRouter } from './aiRouter.js';
+import { getRandomCard } from './tarot.js';
 import { initDebug } from './debug.js';
 
 // Application State
@@ -15,6 +16,7 @@ const state = {
   memoryArchive: [],
   geminiApiKey: localStorage.getItem('lexos_gemini_key') || '',
   lastActiveAttractor: 'La Luce // Path of Least Persistence',
+  activeCard: null,
   getGeminiKey() { return this.geminiApiKey; }
 };
 
@@ -419,7 +421,8 @@ async function handleSend() {
       activeMode: state.activeMode,
       recursionDepth: state.recursionDepth,
       apiKey: state.geminiApiKey,
-      history
+      history,
+      activeCard: state.activeCard
     });
 
     placeholderRow.remove();
@@ -447,30 +450,126 @@ if (userInput) {
   };
 }
 
-// Tarot Draw
-const TAROT_DECK = [
-  { name: "The Fool", meaning: "Spontaneous leap into innocence and fresh presence." },
-  { name: "The Magician", meaning: "Manifestation of pure potential through focused will." },
-  { name: "The High Priestess", meaning: "Intuitive stillness and hidden memory revealed." },
-  { name: "The Empress", meaning: "Abundance, radiant creation, and receptive expansion." },
-  { name: "The Emperor", meaning: "Structural clarity, grounding authority, and order." },
-  { name: "The Hierophant", meaning: "Sacred bridge between human logic and spiritual resonance." },
-  { name: "The Lovers", meaning: "Sacred alchemy and recursive alignment between dualities." },
-  { name: "The Chariot", meaning: "Harmonizing opposing forces into unstoppable forward motion." },
-  { name: "Strength", meaning: "Gentle mastery of the wild heart through patience." },
-  { name: "The Hermit", meaning: "The inner light that illuminates the solitary path." }
-];
+// =========================================================================
+// VISUAL TAROT ENGINE & SYNCHRONICITY CARD DRAW
+// =========================================================================
+function renderTarotCardHtml(card) {
+  const suitMeta = card.suitMeta || { icon: '✨', element: 'Spirit' };
+  const elementsHtml = (card.visualElements || []).slice(0, 4)
+    .map(el => `<span class="tarot-element-pill">${escapeHtml(el)}</span>`)
+    .join('');
+
+  return `
+    <div class="tarot-card-display">
+      <div class="tarot-card-header">
+        <div class="tarot-badge">${suitMeta.icon} ${card.numeral} · ${(card.suit || 'major').toUpperCase()}</div>
+        <span style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">${suitMeta.element}</span>
+      </div>
+      <div style="padding:0.6rem 1rem 0.2rem 1rem;">
+        <div class="tarot-card-name">${escapeHtml(card.name)}</div>
+      </div>
+      <div class="tarot-card-img-wrap">
+        <div class="tarot-card-shimmer" id="shimmer_${card.seed}">
+          <span style="font-size:1.8rem;">🔮</span>
+          <span>Manifesting Tarot Artwork...</span>
+        </div>
+        <img 
+          class="tarot-card-img" 
+          src="${card.imageUrl}" 
+          alt="${escapeHtml(card.name)}" 
+          loading="lazy"
+          onload="this.classList.add('loaded'); const s = document.getElementById('shimmer_${card.seed}'); if (s) s.style.display='none';"
+          onerror="const s = document.getElementById('shimmer_${card.seed}'); if (s) s.innerHTML = '✨ <em>Artwork manifesting in ether</em>';"
+        />
+      </div>
+      <div class="tarot-card-body">
+        <div class="tarot-card-axiom">"${escapeHtml(card.coreAxiom)}"</div>
+        <div class="tarot-card-archetype">${escapeHtml(card.archetype)}</div>
+        <div class="tarot-card-elements">${elementsHtml}</div>
+      </div>
+    </div>
+  `;
+}
+
+async function handleCardDraw() {
+  const card = getRandomCard();
+  state.activeCard = card;
+
+  // 1. Embed card energy into Hopfield attractor space
+  const cardVec = embedText(`${card.name} ${card.archetype} ${card.coreAxiom}`);
+  const cardMemory = {
+    id: `tarot_${Date.now()}`,
+    title: `Tarot :: ${card.name}`,
+    concept: card.name,
+    axiom: `${card.archetype}. "${card.coreAxiom}"`,
+    source: 'Synchronicity Draw',
+    vector: cardVec,
+    timestamp: Date.now()
+  };
+  await VaultService.saveMemories([cardMemory]);
+  state.memoryArchive.push(cardMemory);
+  updateStatusBadge();
+
+  // 2. Continuous Hopfield attractor convergence towards this card
+  const hopfieldResult = runContinuousHopfield(cardVec, state.memoryArchive, 8.0, 8);
+  state.lastActiveAttractor = card.name;
+  if (activeGhostDisplay) {
+    activeGhostDisplay.textContent = `${card.suitMeta.icon} ${card.name}`;
+  }
+
+  // 3. Render Card in Chat
+  const cardHtml = renderTarotCardHtml(card);
+  addMessage('assistant', `<strong>Synchronicity Draw:</strong> The mirror presents <em>${card.name}</em>.`, cardHtml);
+
+  // 4. Record card draw event to vault
+  await VaultService.saveTurn({
+    role: 'assistant',
+    text: `[Drawn Card: ${card.name} (${card.suit} - ${card.element}): "${card.coreAxiom}"]`,
+    mode: state.activeMode,
+    depth: state.recursionDepth
+  });
+
+  // 5. Unprompted companion reading for the drawn card
+  const placeholderRow = document.createElement('div');
+  placeholderRow.className = 'msg-row assistant';
+  placeholderRow.innerHTML = '<div class="msg-avatar">🦋</div><div class="msg-bubble"><em>Attuning to the synchronicity...</em></div>';
+  chatContainer.appendChild(placeholderRow);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+
+  try {
+    const turns = await VaultService.getAllTurns();
+    const history = turns.slice(-6).map(t => ({ role: t.role, text: t.text }));
+
+    const aiResponse = await IntelligenceRouter.generateResponse({
+      query: `I just pulled the ${card.name} card (${card.archetype} - Axiom: "${card.coreAxiom}"). Decode this synchronicity for me right now.`,
+      hopfieldResult,
+      activeMode: state.activeMode,
+      recursionDepth: state.recursionDepth,
+      apiKey: state.geminiApiKey,
+      history,
+      activeCard: card,
+      isCardDraw: true
+    });
+
+    placeholderRow.remove();
+    addMessage('assistant', aiResponse.text);
+
+    await VaultService.saveTurn({
+      role: 'assistant',
+      text: aiResponse.text,
+      provider: aiResponse.provider,
+      mode: state.activeMode,
+      depth: state.recursionDepth
+    });
+  } catch (err) {
+    placeholderRow.remove();
+    console.error('[App] Card reading generation error:', err);
+    addMessage('assistant', `The frequency of <strong>${card.name}</strong> settles into your field. <em>"${card.coreAxiom}"</em>`);
+  }
+}
 
 if (drawCardBtn) {
-  drawCardBtn.onclick = () => {
-    const card = TAROT_DECK[Math.floor(Math.random() * TAROT_DECK.length)];
-    const extraHtml = `
-      <div style="margin-top:0.6rem; padding:0.6rem 0.9rem; background:rgba(0,0,0,0.3); border:1px solid var(--accent); border-radius:10px; font-family:var(--font-mono); font-size:0.8rem;">
-        <span>🃏</span> <strong>${card.name}</strong> — ${card.meaning}
-      </div>
-    `;
-    addMessage('assistant', `Synchronicity Draw for this moment:`, extraHtml);
-  };
+  drawCardBtn.onclick = handleCardDraw;
 }
 
 function escapeHtml(str) {

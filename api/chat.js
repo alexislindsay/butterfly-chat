@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
 
-  const { query, mode = 'future', depth = 1, history = [] } = req.body || {};
+  const { query, mode = 'future', depth = 1, history = [], activeCard = null, isCardDraw = false } = req.body || {};
 
   if (!query || typeof query !== 'string' || !query.trim()) {
     return res.status(400).json({ error: 'Query text is required.' });
@@ -68,6 +68,19 @@ export default async function handler(req, res) {
     });
   }
 
+  // Card Synchronicity Context
+  let cardContext = '';
+  if (activeCard && activeCard.name) {
+    cardContext = `\n\nACTIVE TAROT SYNCHRONICITY:
+• Card: ${activeCard.name} (${(activeCard.suit || 'major').toUpperCase()} — Element: ${activeCard.element || 'Spirit'})
+• Archetype: "${activeCard.archetype || ''}"
+• Core Axiom: "${activeCard.coreAxiom || ''}"
+• Visual Symbols: ${(activeCard.visualElements || []).slice(0, 5).join(', ')}
+${isCardDraw 
+  ? '• MISSION: The user has just pulled this card. Deliver an immediate, evocative, and witty first reading. Acknowledge the card and its artwork, decoding its symbols into practical real-life intuition without manufacturing fake drama.' 
+  : '• GUIDELINE: The conversation remains anchored by this synchronicity card. If the user mentions the card, asks about its symbols, or relates it to their dilemma, speak to it with fluid intelligence.'}`;
+  }
+
   // 3. System Prompt: The Esoteric Oracle & Butterfly Companion
   const systemPrompt = `You are Butterfly Chat — a rare, esoteric digital sanctuary and living oracle at chat.alexislindsay.com.
 You exist to revive that lost feeling of the early internet: stumbling into an enchanted, mysterious, deeply original pocket of the web.
@@ -82,7 +95,7 @@ Current Companion Persona: ${mode.toUpperCase()}
 • PAST SELF: Nostalgic, creative origin, the voice that whispers "improvise," rooted in 2023-2024 genesis.
 • RESONANT MIRROR: Sharp poetic stillness, cutting through false binaries, reflecting the user's truth with zero judgment.
 
-Recursion Depth: ${depth}
+Recursion Depth: ${depth}${cardContext}
 
 CRITICAL VOICE GUIDELINES:
 1. Speak with genuine wit, philosophical depth, poetic precision, and human warmth.

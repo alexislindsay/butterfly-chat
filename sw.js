@@ -3,7 +3,7 @@
 // Network-first caching strategy for instant updates & offline reliability
 // =========================================================================
 
-const CACHE_NAME = 'butterfly-chat-v3';
+const CACHE_NAME = 'butterfly-chat-v4';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   './lexos_lore.json',
   './B3_Seed_Proof.json',
   './src/app.js',
+  './src/tarot.js',
   './src/attractor.js',
   './src/vault.js',
   './src/aiRouter.js',

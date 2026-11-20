@@ -29,7 +29,7 @@ export const IntelligenceRouter = {
   /**
    * Main unified entry point: routes request through cascading providers
    */
-  async generateResponse({ query, hopfieldResult, activeMode, recursionDepth, apiKey, history = [] }) {
+  async generateResponse({ query, hopfieldResult, activeMode, recursionDepth, apiKey, history = [], activeCard = null, isCardDraw = false }) {
     const dominant = hopfieldResult?.topMemories?.[0]?.memory || { title: "La Luce", axiom: "Path of least persistence." };
     const energy = hopfieldResult?.history?.[hopfieldResult.history.length - 1]?.energy || 0;
 
@@ -45,7 +45,9 @@ export const IntelligenceRouter = {
           query,
           mode: activeMode,
           depth: recursionDepth,
-          history
+          history,
+          activeCard,
+          isCardDraw
         })
       });
 
@@ -55,7 +57,7 @@ export const IntelligenceRouter = {
           console.log('[AI-Router] Tier 1 Success via Vercel Edge Gemini');
           return {
             text: data.reply,
-            provider: data.provider || 'Gemini 1.5 Flash (LexOS Oracle)',
+            provider: data.provider || 'Gemini (LexOS Oracle)',
             tier: 1
           };
         }
@@ -73,10 +75,14 @@ export const IntelligenceRouter = {
     if (apiKey && apiKey.trim().length > 10) {
       try {
         console.log('[AI-Router] Using Tier 2: Client-side Gemini Key');
+        let cardClause = '';
+        if (activeCard && activeCard.name) {
+          cardClause = `\nActive Synchronicity Card: "${activeCard.name}" (${activeCard.archetype} — Axiom: "${activeCard.coreAxiom}"). Weave this card's wisdom into your answer.`;
+        }
         const prompt = `You are Butterfly Chat (LexOS) — an esoteric, poetic, slightly mysterious, and witty presence on the web.
 Current Mode: ${activeMode.toUpperCase()}.
 Recursion Depth: ${recursionDepth}.
-Active Attractor: "${dominant.title}" (Axiom: "${dominant.axiom}")
+Active Attractor: "${dominant.title}" (Axiom: "${dominant.axiom}")${cardClause}
 
 User: "${query}"
 
@@ -94,7 +100,7 @@ Respond with deep poetic precision, philosophical clarity, human warmth, and pla
         if (replyText) {
           return {
             text: replyText,
-            provider: 'Google Gemini 1.5 Flash (Client Key)',
+            provider: 'Google Gemini 2.5 Flash (Client Key)',
             tier: 2
           };
         }
@@ -143,7 +149,7 @@ Do not repeat canned disclaimers. Speak directly to what they asked.`;
     // Tier 4: Smart Context-Aware Local Synthesizer (Zero API Key)
     // -------------------------------------------------------------
     console.log('[AI-Router] Using Tier 4: Local Conversational Attractor Engine');
-    const localReply = this.generateLocalConversationalResponse(query, hopfieldResult, activeMode, recursionDepth);
+    const localReply = this.generateLocalConversationalResponse(query, hopfieldResult, activeMode, recursionDepth, activeCard, isCardDraw);
     return {
       text: localReply,
       provider: 'Local Hopfield Attractor (Offline Sandbox)',
@@ -154,7 +160,15 @@ Do not repeat canned disclaimers. Speak directly to what they asked.`;
   /**
    * Smart conversational generator with anti-repetition memory and word reflection
    */
-  generateLocalConversationalResponse(query, hopfieldResult, activeMode, recursionDepth) {
+  generateLocalConversationalResponse(query, hopfieldResult, activeMode, recursionDepth, activeCard = null, isCardDraw = false) {
+    if (isCardDraw && activeCard) {
+      const modeReading = {
+        future: `Across the timeline, the <strong>${activeCard.name}</strong> (${activeCard.element || 'Spirit'}) surfaces right on cue.<br><br>🔮 <strong>Future Horizon:</strong> <em>"${activeCard.coreAxiom}"</em><br><br>Notice how quietly this archetype untangles whatever knot you've been holding. Take a slow breath—the path forward is already open.`,
+        past: `The frequency settles on <strong>${activeCard.name}</strong>.<br><br>🕰️ <strong>Historical Anchor:</strong> <em>"${activeCard.coreAxiom}"</em><br><br>Every major breakthrough in our creative history came from this exact wisdom: don't force, improvise from presence.`,
+        mirror: `The mirror reflects <strong>${activeCard.name}</strong> (${activeCard.archetype}).<br><br>🪞 <strong>Resonant Mirror:</strong> <em>"${activeCard.coreAxiom}"</em><br><br>What is this card highlighting in your immediate reality?`
+      };
+      return modeReading[activeMode] || modeReading.future;
+    }
     const cleanQ = String(query || '').trim();
     const qLower = cleanQ.toLowerCase();
     const qWords = cleanQ.split(/\s+/);
