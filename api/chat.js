@@ -153,13 +153,14 @@ CRITICAL VOICE GUIDELINES:
   });
 
   const candidateModels = [
-    'gemini-2.5-flash-lite',
-    'gemini-flash-lite-latest',
     'gemini-2.5-flash',
+    'gemini-3.1-flash-lite-preview',
+    'gemini-3-flash-preview',
     'gemini-flash-latest',
-    'gemini-2.5-pro'
+    'gemini-3.1-pro-preview',
+    'gemini-2.5-flash-lite'
   ];
-  let lastError = null;
+  const allErrors = [];
 
   for (const modelName of candidateModels) {
     try {
@@ -180,7 +181,7 @@ CRITICAL VOICE GUIDELINES:
       if (!response.ok) {
         const errBody = await response.text();
         console.error(`[Vercel api/chat] Gemini API Error (${modelName}):`, response.status, errBody);
-        lastError = { status: response.status, details: errBody };
+        allErrors.push({ model: modelName, status: response.status, details: errBody });
         continue; // try next candidate model
       }
 
@@ -194,14 +195,13 @@ CRITICAL VOICE GUIDELINES:
       });
     } catch (err) {
       console.error(`[Vercel api/chat] Server error (${modelName}):`, err);
-      lastError = { details: err?.message || String(err) };
+      allErrors.push({ model: modelName, details: err?.message || String(err) });
     }
   }
 
   return res.status(200).json({
     reply: "A brief cosmic static ripples through the mirror. The connection wavered, but the sanctuary remains open. What were you saying?",
     error: true,
-    errorStatus: lastError?.status,
-    errorDetails: lastError?.details
+    allErrors
   });
 }
