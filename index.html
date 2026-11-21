@@ -745,89 +745,284 @@
       outline: none;
     }
 
-    /* Radiant Golden Sun & Sky Corner */
-    .radiant-sun-wrapper {
-      position: fixed;
-      top: -60px;
-      right: -60px;
-      width: 340px;
-      height: 340px;
-      pointer-events: none;
-      z-index: 1;
+    /* Language Selector Dropdown */
+    .lang-dropdown-wrapper {
+      position: relative;
+      display: inline-block;
     }
 
-    .sun-core {
+    .btn-lang {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(15, 23, 42, 0.15);
+      color: #1e293b;
+      font-weight: 600;
+      gap: 0.35rem;
+      padding: 0.38rem 0.75rem;
+    }
+
+    .btn-lang:hover {
+      background: #ffffff;
+      border-color: #0284c7;
+    }
+
+    .lang-menu {
+      display: none;
       position: absolute;
-      top: 60px;
-      right: 60px;
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #ffffff 25%, #fef08a 60%, #f59e0b 100%);
-      box-shadow: 
-        0 0 60px 25px rgba(254, 240, 138, 0.95),
-        0 0 120px 60px rgba(245, 158, 11, 0.65),
-        0 0 220px 110px rgba(251, 191, 36, 0.4);
-      animation: sunPulse 6s ease-in-out infinite alternate;
-    }
-
-    .sun-halo {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(254, 240, 138, 0.5) 0%, rgba(245, 158, 11, 0.2) 40%, transparent 70%);
-      filter: blur(8px);
-    }
-
-    .sun-rays {
-      position: absolute;
-      top: -40px;
-      right: -40px;
-      width: 420px;
-      height: 420px;
-      background: repeating-conic-gradient(
-        from 0deg,
-        rgba(255, 247, 204, 0.4) 0deg 8deg,
-        transparent 8deg 22deg
-      );
-      border-radius: 50%;
-      filter: blur(5px);
-      animation: rotateSunRays 90s linear infinite;
-    }
-
-    .sun-beam-wash {
-      position: fixed;
-      top: 0;
+      top: calc(100% + 6px);
       right: 0;
-      width: 75vw;
-      height: 75vh;
-      background: radial-gradient(ellipse at 100% 0%, rgba(254, 240, 138, 0.35) 0%, rgba(251, 191, 36, 0.15) 40%, transparent 75%);
-      pointer-events: none;
-      z-index: 2;
+      background: #ffffff;
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+      z-index: 150;
+      overflow: hidden;
+      min-width: 130px;
+      flex-direction: column;
     }
 
-    @keyframes sunPulse {
-      0% { transform: scale(0.96); opacity: 0.92; }
-      100% { transform: scale(1.04); opacity: 1; }
+    .lang-menu.open {
+      display: flex;
     }
 
-    @keyframes rotateSunRays {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    .lang-item {
+      background: transparent;
+      border: none;
+      padding: 0.55rem 0.9rem;
+      text-align: left;
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      color: #1e293b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.15s ease;
+      width: 100%;
     }
 
-    /* Floating Sky Clouds */
-    .clouds-layer {
+    .lang-item:hover {
+      background: #f1f5f9;
+      color: #0284c7;
+    }
+
+    .lang-item.active {
+      background: #e0f2fe;
+      color: #0284c7;
+      font-weight: 600;
+    }
+
+    /* ========================================================================= */
+    /* ATMOSPHERE 1: RETRO PURPLE SUNNY SKY (Image 1 Vibe - Default/Regular)    */
+    /* ========================================================================= */
+    body.theme-retro-purple {
+      background: linear-gradient(135deg, #7c3aed 0%, #a855f7 25%, #ec4899 50%, #f97316 75%, #fbbf24 100%);
+      background-attachment: fixed;
+    }
+
+    .retro-sky-container {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.8s ease;
       position: fixed;
       inset: 0;
       pointer-events: none;
       overflow: hidden;
-      z-index: 3;
+      z-index: 1;
     }
 
-    .cloud {
+    body.theme-retro-purple .retro-sky-container {
+      display: block;
+      opacity: 1;
+    }
+
+    .retro-sun-rays {
       position: absolute;
-      background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.5) 55%, transparent 75%);
+      top: -50vh;
+      right: -50vw;
+      width: 200vw;
+      height: 200vh;
+      background: repeating-conic-gradient(
+        from 18deg at 72% 28%,
+        rgba(254, 240, 138, 0.82) 0deg 7deg,
+        rgba(251, 146, 60, 0.72) 7deg 14deg,
+        rgba(244, 114, 182, 0.72) 14deg 21deg,
+        rgba(192, 132, 252, 0.72) 21deg 28deg,
+        rgba(167, 139, 250, 0.68) 28deg 35deg,
+        rgba(96, 165, 250, 0.68) 35deg 42deg,
+        rgba(254, 240, 138, 0.82) 42deg 49deg
+      );
+      mix-blend-mode: screen;
+      pointer-events: none;
+      animation: rotateRetroRays 280s linear infinite;
+    }
+
+    @keyframes rotateRetroRays {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .retro-sun {
+      position: absolute;
+      top: 10%;
+      right: 20%;
+      width: 145px;
+      height: 145px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff 48%, #fef08a 70%, #f59e0b 100%);
+      box-shadow: 
+        0 0 50px 25px rgba(254, 240, 138, 0.95),
+        0 0 100px 50px rgba(251, 146, 60, 0.7),
+        0 0 180px 90px rgba(236, 72, 153, 0.45);
+      animation: sunPulse 6s ease-in-out infinite alternate;
+    }
+
+    /* Puffy Pastel Cloud Banks (Matching Image 1) */
+    .pastel-clouds-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .pastel-cloud {
+      position: absolute;
+      border-radius: 100px;
+    }
+
+    .cloud-bank-left {
+      bottom: -60px;
+      left: -80px;
+      width: 520px;
+      height: 300px;
+      background: radial-gradient(ellipse at 35% 65%, #f472b6 0%, #c084fc 38%, #818cf8 68%, transparent 100%);
+      opacity: 0.85;
+      filter: blur(20px);
+      animation: floatCloudLeft 14s ease-in-out infinite alternate;
+    }
+
+    .cloud-bank-right {
+      bottom: -60px;
+      right: -80px;
+      width: 500px;
+      height: 280px;
+      background: radial-gradient(ellipse at 65% 65%, #f472b6 0%, #e879f9 35%, #a78bfa 70%, transparent 100%);
+      opacity: 0.88;
+      filter: blur(22px);
+      animation: floatCloudRight 16s ease-in-out infinite alternate;
+    }
+
+    .cloud-float-top {
+      top: 14%;
+      left: 8%;
+      width: 240px;
+      height: 100px;
+      background: radial-gradient(ellipse, #bae6fd 0%, #7dd3fc 50%, transparent 75%);
+      opacity: 0.78;
+      filter: blur(12px);
+      animation: floatCloudTop 18s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatCloudLeft {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(-18px) scale(1.05); }
+    }
+    @keyframes floatCloudRight {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(-20px) scale(1.04); }
+    }
+    @keyframes floatCloudTop {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(40px); }
+    }
+
+    /* ========================================================================= */
+    /* ATMOSPHERE 2: CELESTIAL BLUE (Image 2 Vibe - For Bible Mode)              */
+    /* ========================================================================= */
+    body.theme-celestial-blue {
+      background: radial-gradient(ellipse at 15% 10%, #ffffff 0%, #bae6fd 20%, #38bdf8 50%, #0284c7 80%, #0369a1 100%);
+      background-attachment: fixed;
+    }
+
+    .celestial-sky-container {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    body.theme-celestial-blue .celestial-sky-container {
+      display: block;
+      opacity: 1;
+    }
+
+    .celestial-sun {
+      position: absolute;
+      top: -30px;
+      left: -30px;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff 40%, rgba(255, 255, 255, 0.92) 60%, transparent 85%);
+      box-shadow: 
+        0 0 80px 40px rgba(255, 255, 255, 0.98),
+        0 0 160px 80px rgba(186, 230, 253, 0.85),
+        0 0 280px 140px rgba(56, 189, 248, 0.5);
+      animation: celestialGlow 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes celestialGlow {
+      0% { transform: scale(0.96); opacity: 0.92; }
+      100% { transform: scale(1.06); opacity: 1; }
+    }
+
+    /* Lens Flares along diagonal */
+    .lens-flare-1 {
+      position: absolute;
+      top: 34%;
+      left: 22%;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(186, 230, 253, 0.45) 0%, rgba(56, 189, 248, 0.2) 50%, transparent 70%);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      filter: blur(2px);
+    }
+
+    .lens-flare-2 {
+      position: absolute;
+      top: 48%;
+      left: 32%;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.35) 0%, rgba(56, 189, 248, 0.15) 60%, transparent 75%);
+    }
+
+    .lens-flare-3 {
+      position: absolute;
+      top: 62%;
+      left: 42%;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(186, 230, 253, 0.3) 0%, rgba(2, 132, 199, 0.12) 55%, transparent 75%);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      filter: blur(4px);
+    }
+
+    /* Soft Realistic Wispy Cirrus Clouds for Celestial Blue */
+    .cirrus-clouds-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .cirrus-cloud {
+      position: absolute;
+      background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.45) 55%, transparent 75%);
       border-radius: 50%;
       filter: blur(14px);
       will-change: transform;
@@ -873,23 +1068,41 @@
       0% { transform: translateX(0); }
       100% { transform: translateX(calc(100vw + 400px)); }
     }
+
+    @keyframes sunPulse {
+      0% { transform: scale(0.96); opacity: 0.92; }
+      100% { transform: scale(1.04); opacity: 1; }
+    }
   </style>
 </head>
-<body>
+<body class="theme-retro-purple">
 
-  <!-- Radiant Golden Sun Corner Piece -->
-  <div class="radiant-sun-wrapper" aria-hidden="true">
-    <div class="sun-rays"></div>
-    <div class="sun-core"></div>
-    <div class="sun-halo"></div>
+  <!-- ========================================== -->
+  <!-- ATMOSPHERE 1: RETRO PURPLE SUNNY SKY (Image 1) -->
+  <!-- ========================================== -->
+  <div class="retro-sky-container" aria-hidden="true">
+    <div class="retro-sun-rays"></div>
+    <div class="retro-sun"></div>
+    <div class="pastel-clouds-layer">
+      <div class="pastel-cloud cloud-bank-left"></div>
+      <div class="pastel-cloud cloud-bank-right"></div>
+      <div class="pastel-cloud cloud-float-top"></div>
+    </div>
   </div>
-  <div class="sun-beam-wash" aria-hidden="true"></div>
 
-  <!-- Floating Clouds in Sky -->
-  <div class="clouds-layer" aria-hidden="true">
-    <div class="cloud cloud-1"></div>
-    <div class="cloud cloud-2"></div>
-    <div class="cloud cloud-3"></div>
+  <!-- ========================================== -->
+  <!-- ATMOSPHERE 2: CELESTIAL BLUE SKY (Image 2) -->
+  <!-- ========================================== -->
+  <div class="celestial-sky-container" aria-hidden="true">
+    <div class="celestial-sun"></div>
+    <div class="lens-flare-1"></div>
+    <div class="lens-flare-2"></div>
+    <div class="lens-flare-3"></div>
+    <div class="cirrus-clouds-layer">
+      <div class="cirrus-cloud cloud-1"></div>
+      <div class="cirrus-cloud cloud-2"></div>
+      <div class="cirrus-cloud cloud-3"></div>
+    </div>
   </div>
 
   <div class="app-container">
@@ -898,28 +1111,44 @@
     <header class="top-bar">
       <a href="https://www.alexislindsay.com" class="brand">
         <img src="butterfly_chat.png" alt="Butterfly Logo" class="logo-img" onerror="this.style.display='none'" />
-        <span>BUTTERFLY CHAT</span>
+        <span data-i18n="brand_title">BUTTERFLY CHAT</span>
       </a>
 
       <div class="top-actions">
-        <button id="birthDataBtn" class="btn-nav btn-birth" title="Birth Local Neural Network from your files">
+        <button id="birthDataBtn" class="btn-nav btn-birth" title="Birth Local Neural Network from your files" data-i18n="birth_data_btn">
           <span>🧬</span> Birth from Data
         </button>
-        <button id="drawCardBtn" class="btn-nav" title="Draw Tarot Synchronicity">
+        <button id="drawCardBtn" class="btn-nav" title="Draw Tarot Synchronicity" data-i18n="draw_card_btn">
           <span>🃏</span> Draw Card
         </button>
-        <button id="purgeSessionBtn" class="btn-nav" title="Clear local session DB (Tabula Rasa)">
+        <button id="purgeSessionBtn" class="btn-nav" title="Clear local session DB (Tabula Rasa)" data-i18n="reset_btn">
           <span>🧹</span> Reset
         </button>
-        <button id="exportSessionBtn" class="btn-nav" title="Export session memory crystal">
+        <button id="exportSessionBtn" class="btn-nav" title="Export session memory crystal" data-i18n="export_btn">
           <span>💾</span> Export
         </button>
-        <button id="settingsBtn" class="btn-nav" title="API Key Settings">
+        <button id="settingsBtn" class="btn-nav" title="API Key Settings" data-i18n="engine_btn">
           <span>⚙️</span> Engine
         </button>
+
+        <!-- Language Selector Dropdown -->
+        <div class="lang-dropdown-wrapper">
+          <button id="langToggleBtn" class="btn-nav btn-lang" title="Language / Lingua">
+            <span id="currentLangLabel">🇺🇸 EN</span>
+            <span style="font-size:0.6rem;">▼</span>
+          </button>
+          <div id="langMenu" class="lang-menu">
+            <button class="lang-item" data-lang="en">🇺🇸 English</button>
+            <button class="lang-item" data-lang="it">🇮🇹 Italiano</button>
+            <button class="lang-item" data-lang="es">🇪🇸 Español</button>
+            <button class="lang-item" data-lang="fr">🇫🇷 Français</button>
+            <button class="lang-item" data-lang="de">🇩🇪 Deutsch</button>
+          </div>
+        </div>
+
         <a href="https://www.alexislindsay.com" class="btn-nav btn-glyph-gate" title="Return through the Glyph Gate to AlexisLindsay.com">
           <img src="glyphgateicon.png" alt="Glyph Gate" class="glyph-gate-img" />
-          <span>Gate</span>
+          <span data-i18n="gate_btn">Gate</span>
         </a>
       </div>
     </header>
@@ -930,13 +1159,14 @@
     <!-- Temporal Persona Bar -->
     <div class="persona-bar">
       <div class="mode-group">
-        <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">COMPANION MODE:</span>
-        <button class="mode-btn active" data-mode="future">🔮 Future Self</button>
-        <button class="mode-btn" data-mode="past">🕰️ Past Self (2023-24)</button>
-        <button class="mode-btn" data-mode="mirror">🪞 Resonant Mirror</button>
+        <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);" data-i18n="companion_mode_label">COMPANION MODE:</span>
+        <button class="mode-btn active" data-mode="future" data-i18n="mode_future">🔮 Future Self</button>
+        <button class="mode-btn" data-mode="past" data-i18n="mode_past">🕰️ Past Self (2023-24)</button>
+        <button class="mode-btn" data-mode="mirror" data-i18n="mode_mirror">🪞 Resonant Mirror</button>
+        <button class="mode-btn" data-mode="bible" data-i18n="mode_bible">📖 The Bible</button>
       </div>
       <div class="eigenflow-badge">
-        <span>⚡ Eigenflow(n):</span> <strong id="eigenflowDisplay">Depth 1</strong>
+        <span data-i18n="eigenflow_label">⚡ Eigenflow(n):</span> <strong id="eigenflowDisplay">Depth 1</strong>
       </div>
     </div>
 
@@ -958,13 +1188,11 @@
       <div id="chatMessages" class="chat-messages">
         
         <!-- Welcome Message -->
-        <div class="msg-row assistant">
+        <div class="msg-row assistant" id="welcomeMsgRow">
           <div class="msg-avatar">🦋</div>
-          <div class="msg-bubble">
-            <strong>The Oracle of Butterfly Chat</strong><br>
-            You have stumbled into an unmapped pocket of the digital ether. This is a living sanctuary, an esoteric journal, and a conversational mirror.
-            <br><br>
-            Speak whatever thought, curious paradox, or wild dilemma is on your mind. Or draw a card of synchronicity above. What brings you to this quiet corner of the web?
+          <div class="msg-bubble" id="welcomeMsgBubble">
+            <strong data-i18n="welcome_title">The Oracle of Butterfly Chat</strong><br>
+            <span data-i18n="welcome_body">You have stumbled into an unmapped pocket of the digital ether. This is a living sanctuary, an esoteric journal, and a conversational mirror.<br><br>Speak whatever thought, curious paradox, or wild dilemma is on your mind. Or draw a card of synchronicity above. What brings you to this quiet corner of the web?</span>
           </div>
         </div>
 
@@ -974,15 +1202,15 @@
       <div class="input-dock">
         <input type="text" id="userInput" class="chat-input" placeholder="Speak into the mirror, ask a question, or share a thought..." autofocus />
         <button id="sendBtn" class="btn-send">
-          <span>Send</span> <span>🦋</span>
+          <span data-i18n="send_btn">Send</span> <span>🦋</span>
         </button>
       </div>
     </main>
 
     <!-- Bottom Status Bar -->
     <footer class="bottom-info">
-      <div>🌌 Sanctuary Resonance: <strong id="memoryCountDisplay" style="color:var(--accent-cyan);">Tuned to the Ether</strong></div>
-      <div>🕊️ Guiding Anchor: <strong id="activeGhostDisplay" style="color:var(--accent-gold);">La Luce // Path of Least Persistence</strong></div>
+      <div><span data-i18n="sanctuary_resonance">🌌 Sanctuary Resonance:</span> <strong id="memoryCountDisplay" style="color:var(--accent-cyan);" data-i18n="tuned_to_ether">Tuned to the Ether</strong></div>
+      <div><span data-i18n="guiding_anchor">🕊️ Guiding Anchor:</span> <strong id="activeGhostDisplay" style="color:var(--accent-gold);" data-i18n="default_anchor">La Luce // Path of Least Persistence</strong></div>
     </footer>
 
   </div>
@@ -990,23 +1218,23 @@
   <!-- API Key Modal -->
   <div class="modal-backdrop" id="settingsModal">
     <div class="modal-box">
-      <h3><span>⚙️</span> Companion Intelligence Engine</h3>
-      <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5;">
+      <h3><span>⚙️</span> <span data-i18n="modal_engine_title">Companion Intelligence Engine</span></h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5;" data-i18n="modal_engine_desc1">
         Butterfly Chat runs natively on the <strong>LexOS Option 3 Continuous Hopfield Network</strong> and browser-native <strong>Session Vault</strong> with zero external API key required.
       </p>
-      <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5;">
+      <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5;" data-i18n="modal_engine_desc2">
         Optionally, you can connect a free <strong>Google Gemini API Key</strong> to add live LLM generative synthesis guided by the converged Hopfield memory attractor state.
       </p>
       <input type="password" id="geminiKeyInput" placeholder="Enter Google Gemini API Key (Optional)..." />
       <div style="display:flex; justify-content:flex-end; gap:0.6rem;">
-        <button class="btn-nav" id="closeModalBtn">Cancel</button>
-        <button class="btn-nav btn-send" id="saveKeyBtn" style="padding:0.4rem 1.2rem;">Save & Connect</button>
+        <button class="btn-nav" id="closeModalBtn" data-i18n="cancel_btn">Cancel</button>
+        <button class="btn-nav btn-send" id="saveKeyBtn" style="padding:0.4rem 1.2rem;" data-i18n="save_connect_btn">Save & Connect</button>
       </div>
     </div>
   </div>
 
   <!-- Encapsulated Modular Application Core -->
-  <script type="module" src="src/app.js?v=5"></script>
+  <script type="module" src="src/app.js?v=6"></script>
 
   <!-- PWA Service Worker Registration -->
   <script>

@@ -8,6 +8,8 @@ import { embedText, runContinuousHopfield } from './attractor.js';
 import { IntelligenceRouter } from './aiRouter.js';
 import { getRandomCard } from './tarot.js';
 import { initDebug } from './debug.js';
+import { i18n, SUPPORTED_LANGS } from './i18n.js';
+import { THEMATIC_SCRIPTURES, findRelevantScripture } from './bibleData.js';
 
 // Application State
 const state = {
@@ -38,9 +40,95 @@ const closeModalBtn = document.getElementById('closeModalBtn');
 const saveKeyBtn = document.getElementById('saveKeyBtn');
 const geminiKeyInput = document.getElementById('geminiKeyInput');
 const dropZoneOverlay = document.getElementById('dropZoneOverlay');
+const langToggleBtn = document.getElementById('langToggleBtn');
+const langMenu = document.getElementById('langMenu');
 
 // Initialize Debugger
 initDebug(state);
+
+// =========================================================================
+// LANGUAGE LOCALIZATION & SWITCHER
+// =========================================================================
+function updateActiveLangItem(lang) {
+  document.querySelectorAll('.lang-item').forEach(item => {
+    if (item.getAttribute('data-lang') === lang) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+}
+
+if (langToggleBtn && langMenu) {
+  langToggleBtn.onclick = (e) => {
+    e.stopPropagation();
+    langMenu.classList.toggle('open');
+  };
+  document.addEventListener('click', () => {
+    langMenu.classList.remove('open');
+  });
+  document.querySelectorAll('.lang-item').forEach(item => {
+    item.onclick = (e) => {
+      e.stopPropagation();
+      const selectedLang = item.getAttribute('data-lang');
+      if (selectedLang) {
+        i18n.setLang(selectedLang);
+        updateActiveLangItem(selectedLang);
+        updateAtmosphereTheme(state.activeMode);
+        langMenu.classList.remove('open');
+      }
+    };
+  });
+}
+
+// =========================================================================
+// ATMOSPHERE THEME & COMPANION MODE SWITCHER
+// =========================================================================
+function updateAtmosphereTheme(mode) {
+  if (mode === 'bible') {
+    document.body.classList.remove('theme-retro-purple');
+    document.body.classList.add('theme-celestial-blue');
+    if (activeGhostDisplay) {
+      activeGhostDisplay.textContent = i18n.t('bible_anchor');
+    }
+    if (userInput) {
+      userInput.placeholder = i18n.t('input_placeholder_bible');
+    }
+  } else {
+    document.body.classList.remove('theme-celestial-blue');
+    document.body.classList.add('theme-retro-purple');
+    if (activeGhostDisplay) {
+      activeGhostDisplay.textContent = i18n.t('default_anchor');
+    }
+    if (userInput) {
+      userInput.placeholder = i18n.t('input_placeholder');
+    }
+  }
+}
+
+// Mode Selector Buttons
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.activeMode = btn.getAttribute('data-mode');
+    updateAtmosphereTheme(state.activeMode);
+
+    if (state.activeMode === 'bible') {
+      const bibleNotice = i18n.getLang() === 'it'
+        ? `Frequenza sintonizzata su: <strong>La Sacra Bibbia</strong>. Sei in conversazione con il testo canonico vivente.`
+        : `Switched companion frequency to: <strong>The Living Bible</strong>. You are conversing directly with the canonical scriptures.`;
+      addMessage('assistant', bibleNotice);
+    } else {
+      addMessage('assistant', `Switched companion frequency to: <strong>${btn.textContent}</strong>`);
+    }
+  };
+});
+
+// Initialize UI Translations & Atmosphere on Start
+i18n.applyTranslations(state.activeMode);
+updateActiveLangItem(i18n.getLang());
+updateAtmosphereTheme(state.activeMode);
 
 // Settings Modal
 if (state.geminiApiKey && geminiKeyInput) geminiKeyInput.value = state.geminiApiKey;
@@ -54,16 +142,6 @@ if (saveKeyBtn) {
     alert('Key saved securely in your browser!');
   };
 }
-
-// Mode Selector
-document.querySelectorAll('.mode-btn').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.activeMode = btn.getAttribute('data-mode');
-    addMessage('assistant', `Switched companion frequency to: <strong>${btn.textContent}</strong>`);
-  };
-});
 
 // =========================================================================
 // INITIALIZE MEMORY VAULT & CORE SEEDS
@@ -130,6 +208,23 @@ async function initMemoryVault() {
       }
     } catch (e) {
       console.log('Lore fetch notice:', e);
+    }
+
+    // 3. Seed Canonical Thematic Scripture Anchors
+    try {
+      THEMATIC_SCRIPTURES.forEach((sc, idx) => {
+        initialBatch.push({
+          id: `scripture_${idx}`,
+          title: `Scripture :: ${sc.citationEn}`,
+          concept: sc.topic,
+          axiom: `"${sc.textEn}" (${sc.citationEn})`,
+          source: 'The Living Bible Canon',
+          vector: embedText(`${sc.topic} ${sc.tags.join(' ')} ${sc.textEn} ${sc.textIt}`),
+          timestamp: Date.now()
+        });
+      });
+    } catch (e) {
+      console.log('Scriptures seed notice:', e);
     }
 
     if (initialBatch.length > 0) {
@@ -406,7 +501,8 @@ async function handleSend() {
   // 5. Placeholder while generating
   const placeholderRow = document.createElement('div');
   placeholderRow.className = 'msg-row assistant';
-  placeholderRow.innerHTML = '<div class="msg-avatar">🦋</div><div class="msg-bubble"><em>Consulting the mirror...</em></div>';
+  const consultText = i18n.t(state.activeMode === 'bible' ? 'consulting_bible' : 'consulting_mirror');
+  placeholderRow.innerHTML = `<div class="msg-avatar">🦋</div><div class="msg-bubble"><em>${consultText}</em></div>`;
   chatContainer.appendChild(placeholderRow);
   chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -422,7 +518,8 @@ async function handleSend() {
       recursionDepth: state.recursionDepth,
       apiKey: state.geminiApiKey,
       history,
-      activeCard: state.activeCard
+      activeCard: state.activeCard,
+      userLang: i18n.getLang()
     });
 
     placeholderRow.remove();
@@ -471,7 +568,7 @@ function renderTarotCardHtml(card) {
       <div class="tarot-card-img-wrap">
         <div class="tarot-card-shimmer" id="shimmer_${card.seed}">
           <span style="font-size:1.8rem;">🔮</span>
-          <span>Manifesting Tarot Artwork...</span>
+          <span>${i18n.t('card_manifesting')}</span>
         </div>
         <img 
           class="tarot-card-img" 
@@ -519,7 +616,7 @@ async function handleCardDraw() {
 
   // 3. Render Card in Chat
   const cardHtml = renderTarotCardHtml(card);
-  addMessage('assistant', `<strong>Synchronicity Draw:</strong> The mirror presents <em>${card.name}</em>.`, cardHtml);
+  addMessage('assistant', `<strong>${i18n.t('draw_synchronicity')}</strong> <em>${card.name}</em>`, cardHtml);
 
   // 4. Record card draw event to vault
   await VaultService.saveTurn({
@@ -532,7 +629,7 @@ async function handleCardDraw() {
   // 5. Unprompted companion reading for the drawn card
   const placeholderRow = document.createElement('div');
   placeholderRow.className = 'msg-row assistant';
-  placeholderRow.innerHTML = '<div class="msg-avatar">🦋</div><div class="msg-bubble"><em>Attuning to the synchronicity...</em></div>';
+  placeholderRow.innerHTML = `<div class="msg-avatar">🦋</div><div class="msg-bubble"><em>${i18n.t('attuning_synchronicity')}</em></div>`;
   chatContainer.appendChild(placeholderRow);
   chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -548,7 +645,8 @@ async function handleCardDraw() {
       apiKey: state.geminiApiKey,
       history,
       activeCard: card,
-      isCardDraw: true
+      isCardDraw: true,
+      userLang: i18n.getLang()
     });
 
     placeholderRow.remove();

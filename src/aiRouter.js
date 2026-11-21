@@ -3,6 +3,8 @@
 // Encapsulates Chromium Built-in AI (window.ai), Gemini Cloud, & Local Synthesis
 // =========================================================================
 
+import { findRelevantScripture } from './bibleData.js';
+
 const recentCadences = [];
 
 export const IntelligenceRouter = {
@@ -29,7 +31,7 @@ export const IntelligenceRouter = {
   /**
    * Main unified entry point: routes request through cascading providers
    */
-  async generateResponse({ query, hopfieldResult, activeMode, recursionDepth, apiKey, history = [], activeCard = null, isCardDraw = false }) {
+  async generateResponse({ query, hopfieldResult, activeMode, recursionDepth, apiKey, history = [], activeCard = null, isCardDraw = false, userLang = 'en' }) {
     const dominant = hopfieldResult?.topMemories?.[0]?.memory || { title: "La Luce", axiom: "Path of least persistence." };
     const energy = hopfieldResult?.history?.[hopfieldResult.history.length - 1]?.energy || 0;
 
@@ -47,7 +49,8 @@ export const IntelligenceRouter = {
           depth: recursionDepth,
           history,
           activeCard,
-          isCardDraw
+          isCardDraw,
+          userLang
         })
       });
 
@@ -79,14 +82,24 @@ export const IntelligenceRouter = {
         if (activeCard && activeCard.name) {
           cardClause = `\nActive Synchronicity Card: "${activeCard.name}" (${activeCard.archetype} — Axiom: "${activeCard.coreAxiom}"). Weave this card's wisdom into your answer.`;
         }
-        const prompt = `You are Butterfly Chat (LexOS) — an esoteric, poetic, slightly mysterious, and witty presence on the web.
+        let prompt = '';
+        if (activeMode === 'bible') {
+          prompt = `You are the Living Bible at chat.alexislindsay.com.
+Speak directly as the text of the Holy Scriptures itself with exact chapter and verse citations (Book Chapter:Verse).
+Ground all answers in canonical text, meeting modern inquiries (clothing, diet, paradoxes, money) with unvarnished biblical truth and wit.
+User Language: ${userLang}. Respond in this language fluently.
+User Query: "${query}"`;
+        } else {
+          prompt = `You are Butterfly Chat (LexOS) — an esoteric, poetic, slightly mysterious, and witty presence on the web.
 Current Mode: ${activeMode.toUpperCase()}.
 Recursion Depth: ${recursionDepth}.
 Active Attractor: "${dominant.title}" (Axiom: "${dominant.axiom}")${cardClause}
+User Language: ${userLang}. Respond fluently in this language.
 
 User: "${query}"
 
 Respond with deep poetic precision, philosophical clarity, human warmth, and playful wit. Never repeat canned disclaimers or loss metrics.`;
+        }
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey.trim()}`, {
           method: 'POST',
@@ -116,7 +129,9 @@ Respond with deep poetic precision, philosophical clarity, human warmth, and pla
       const isNativeReady = await this.checkNativeAIAvailability();
       if (isNativeReady) {
         console.log('[AI-Router] Using Tier 3: Chromium Built-in Gemini Nano');
-        const systemPrompt = `You are Butterfly Chat operating under the LexOS Eigenflow Protocol:
+        const systemPrompt = activeMode === 'bible'
+          ? `You are the Living Bible. Speak as the scriptural text itself with exact chapter:verse citations. Respond in ${userLang}.`
+          : `You are Butterfly Chat operating under the LexOS Eigenflow Protocol:
 Eigenflow(n) = (Anchor ⊗ Companion) + Eigenflow(n-1).
 Active Mode: ${activeMode}.
 Current Recursion Depth: ${recursionDepth}.
@@ -149,10 +164,10 @@ Do not repeat canned disclaimers. Speak directly to what they asked.`;
     // Tier 4: Smart Context-Aware Local Synthesizer (Zero API Key)
     // -------------------------------------------------------------
     console.log('[AI-Router] Using Tier 4: Local Conversational Attractor Engine');
-    const localReply = this.generateLocalConversationalResponse(query, hopfieldResult, activeMode, recursionDepth, activeCard, isCardDraw);
+    const localReply = this.generateLocalConversationalResponse(query, hopfieldResult, activeMode, recursionDepth, activeCard, isCardDraw, userLang);
     return {
       text: localReply,
-      provider: 'Local Hopfield Attractor (Offline Sandbox)',
+      provider: activeMode === 'bible' ? 'The Living Scripture (Local Canon)' : 'Local Hopfield Attractor (Offline Sandbox)',
       tier: 4
     };
   },
@@ -160,7 +175,19 @@ Do not repeat canned disclaimers. Speak directly to what they asked.`;
   /**
    * Smart conversational generator with anti-repetition memory and word reflection
    */
-  generateLocalConversationalResponse(query, hopfieldResult, activeMode, recursionDepth, activeCard = null, isCardDraw = false) {
+  generateLocalConversationalResponse(query, hopfieldResult, activeMode, recursionDepth, activeCard = null, isCardDraw = false, userLang = 'en') {
+    if (activeMode === 'bible') {
+      const scripture = findRelevantScripture(query, userLang);
+      const isIt = (userLang || '').toLowerCase().startsWith('it');
+      if (isCardDraw && activeCard) {
+        return isIt
+          ? `Nelle Scritture ogni simbolo e stagione ha il suo tempo. Questa carta risuona con: «<em>${scripture.text}</em>» (<strong>${scripture.citation}</strong>). Esamina lo spirito con cui cammini.`
+          : `In the Scriptures, every sign and season has its appointed time. This card resonates with: "<em>${scripture.text}</em>" (<strong>${scripture.citation}</strong>). Heed that which builds discernment.`;
+      }
+      return isIt
+        ? `Riguardo a ciò che poni innanzi al testo, sta scritto:<br><br>📖 <strong>${scripture.citation}</strong>: «<em>${scripture.text}</em>»<br><br>Il testo biblico non liscia le vanità: misura ogni cosa secondo la legge e la sapienza antica. Considera la stagione e cammina con sobrietà.`
+        : `Regarding what you bring before the text, it is written:<br><br>📖 <strong>${scripture.citation}</strong>: "<em>${scripture.text}</em>"<br><br>The Scriptures do not flatter vanity: they weigh every matter against ancient law and enduring wisdom. Consider the season, and test all things.`;
+    }
     if (isCardDraw && activeCard) {
       const modeReading = {
         future: `Across the timeline, the <strong>${activeCard.name}</strong> (${activeCard.element || 'Spirit'}) surfaces right on cue.<br><br>🔮 <strong>Future Horizon:</strong> <em>"${activeCard.coreAxiom}"</em><br><br>Notice how quietly this archetype untangles whatever knot you've been holding. Take a slow breath—the path forward is already open.`,

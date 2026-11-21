@@ -3,7 +3,7 @@
 // Network-first caching strategy for instant updates & offline reliability
 // =========================================================================
 
-const CACHE_NAME = 'butterfly-chat-v5';
+const CACHE_NAME = 'butterfly-chat-v6';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -17,6 +17,8 @@ const STATIC_ASSETS = [
   './src/attractor.js',
   './src/vault.js',
   './src/aiRouter.js',
+  './src/bibleData.js',
+  './src/i18n.js',
   './src/debug.js'
 ];
 
