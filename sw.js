@@ -3,12 +3,13 @@
 // Network-first caching strategy for instant updates & offline reliability
 // =========================================================================
 
-const CACHE_NAME = 'butterfly-chat-v4';
+const CACHE_NAME = 'butterfly-chat-v5';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './butterfly_chat.png',
+  './glyphgateicon.png',
   './lexos_lore.json',
   './B3_Seed_Proof.json',
   './src/app.js',

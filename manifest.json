@@ -6,8 +6,8 @@
   "id": "butterfly-chat-lexos",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#080112",
-  "theme_color": "#16072b",
+  "background_color": "#e0f2fe",
+  "theme_color": "#38bdf8",
   "icons": [
     {
       "src": "butterfly_chat.png",
